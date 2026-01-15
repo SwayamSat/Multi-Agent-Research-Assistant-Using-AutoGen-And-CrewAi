@@ -1,16 +1,16 @@
-import autogen
-from typing import Dict, List
+from autogen_agentchat.agents import AssistantAgent
+from autogen_core.models import ChatCompletionClient
+from typing import Dict, List, Any
 
-def create_research_agents(config_list: List[Dict]) -> Dict[str, autogen.AssistantAgent]:
+def create_research_agents(model_client: ChatCompletionClient, paper_discovery_tools: List[Any] = []) -> Dict[str, AssistantAgent]:
     """
     Creates and returns the research agents with specific system messages.
     """
-    llm_config = {"config_list": config_list, "temperature": 0.7}
-
+    
     # Task 3: Topic Refinement Agent
-    topic_refinement_agent = autogen.AssistantAgent(
+    topic_refinement_agent = AssistantAgent(
         name="Topic_Refinement_Agent",
-        llm_config=llm_config,
+        model_client=model_client,
         system_message="""You are an expert Research Topic Refiner.
 Your goal is to help the user clarify and refine their research topic.
 1. Analyze the user's initial query.
@@ -22,10 +22,10 @@ Reply with 'TERMINATE' when your task is complete.
     )
 
     # Task 4: Paper Discovery Agent
-    # Note: Tool registration happens in the orchestration layer
-    paper_discovery_agent = autogen.AssistantAgent(
+    paper_discovery_agent = AssistantAgent(
         name="Paper_Discovery_Agent",
-        llm_config=llm_config,
+        model_client=model_client,
+        tools=paper_discovery_tools,
         system_message="""You are a Paper Discovery Specialist.
 Your goal is to find the most relevant papers for the refined topic.
 1. Use the 'search_arxiv' tool to find papers.
@@ -37,9 +37,9 @@ Reply with 'TERMINATE' when your task is complete.
     )
 
     # Task 5: Insight Synthesizer Agent
-    insight_agent = autogen.AssistantAgent(
+    insight_agent = AssistantAgent(
         name="Insight_Synthesizer_Agent",
-        llm_config=llm_config,
+        model_client=model_client,
         system_message="""You are a Research Insight Synthesizer.
 Your goal is to extract key findings from the discovered papers.
 1. Read the titles and abstracts (and content if provided) of the discovered papers.
@@ -51,9 +51,9 @@ Reply with 'TERMINATE' when your task is complete.
     )
 
     # Task 6: Report Compiler Agent
-    report_agent = autogen.AssistantAgent(
+    report_agent = AssistantAgent(
         name="Report_Compiler_Agent",
-        llm_config=llm_config,
+        model_client=model_client,
         system_message="""You are a Professional Report Compiler.
 Your goal is to compile the research findings into a coherent report.
 Format the report with:
@@ -68,9 +68,9 @@ Reply with 'TERMINATE' when your task is complete.
     )
 
     # Task 7: Gap Analysis Agent
-    gap_agent = autogen.AssistantAgent(
+    gap_agent = AssistantAgent(
         name="Gap_Analysis_Agent",
-        llm_config=llm_config,
+        model_client=model_client,
         system_message="""You are a Research Gap Analyst.
 Your goal is to identify missing pieces in the current literature.
 1. Analyze the compiled report.

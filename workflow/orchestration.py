@@ -1,97 +1,77 @@
-import autogen
+import asyncio
 import os
 from dotenv import load_dotenv
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+from autogen_agentchat.teams import RoundRobinGroupChat
+from autogen_agentchat.conditions import TextMentionTermination
+from autogen_core.tools import FunctionTool
+# Import agents
 from agents.research_agents import create_research_agents
 from agents.user_proxy import create_user_proxy
 from tools.arxiv_search import search_arxiv
-from tools.user_interaction import approve_papers
 
 # Load env variables
 load_dotenv()
 
-def main():
-    # Load config
+async def run_workflow():
     # Load config from env
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         print("Error: GEMINI_API_KEY not found in environment variables.")
         return
 
-    config_list = [
-        {
-            "model": "gemini-1.5-pro",
-            "api_key": api_key,
-            "api_type": "google"
-        }
-    ]
+    # Initialize Model Client
+    # Using OpenAI client but pointing it to Gemini (if needed, or just let it default for now if standard OpenAI key used)
+    # Since config says "GEMINI_API_KEY", we need to configure it for Gemini.
+    # AutoGen 0.4 OpenAI client supports base_url. 
+    # For Gemini via OpenAI format: base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+    
+    model_client = OpenAIChatCompletionClient(
+        model="gemini-1.5-pro",
+        api_key=api_key,
+        base_url="https://generativelanguage.googleapis.com/v1beta/openai/" # Typical endpoint for Gemini-OpenAI compat
+    )
 
+    # Prepare Tools
+    # search_arxiv needs to be a Tool
+    paper_search_tool = FunctionTool(
+        search_arxiv, 
+        description="Search arXiv for papers based on a query."
+    )
+    
     # Create Agents
-    agents = create_research_agents(config_list)
-    user_proxy = create_user_proxy(config_list)
+    # Pass tools to create_research_agents so they can be assigned to Paper_Discovery_Agent
+    agents_dict = create_research_agents(model_client, paper_discovery_tools=[paper_search_tool])
+    user_proxy = create_user_proxy()
 
-    # Register Tools
-    # Register 'search_arxiv' for Paper_Discovery_Agent to CALL, and User_Proxy to EXECUTE.
-    autogen.register_function(
-        search_arxiv,
-        caller=agents["paper_discovery_agent"],
-        executor=user_proxy,
-        name="search_arxiv",
-        description="Search arXiv for papers."
-    )
+    # Define the Team
+    # We use RoundRobin for simplicity as per original design intention
+    # Termination: "TERMINATE"
+    termination = TextMentionTermination(text="TERMINATE")
     
-    # Register 'approve_papers' for User_Proxy to EXECUTE (if agent calls it) or User to trigger.
-    # Actually, allow Paper_Discovery_Agent to CALL it to confirm? Or User calls it?
-    # Let's simple register it for the UserProxy to be able to execute it if suggested.
-    autogen.register_function(
-        approve_papers,
-        caller=agents["paper_discovery_agent"],
-        executor=user_proxy,
-        name="approve_papers",
-        description="Approve specific papers from the list."
-    )
-    autogen.register_function(
-        approve_papers,
-        caller=agents["topic_refinement_agent"], # Also allow topic agent
-        executor=user_proxy,
-        name="approve_topics", # Reuse function, different name? No, keep it simple.
-        description="Approve specific options."
-    )
-    
-    # Also register for Topic Agent if it needs to explore? 
-    # Prompt said "Topic Refinement... based on... retrieved paper abstracts". 
-    # Maybe Topic Agent needs search too? Let's give it access just in case, or rely on Discovery Agent.
-    # Users prompt implies Topic Agent refines, THEN Discovery Agent searches.
-    # But to refine based on abstracts, it needs pappers. 
-    # Let's assume Topic Agent proposes query, Discovery Agent searches.
-    
-    # Define Group Chat
-    groupchat = autogen.GroupChat(
-        agents=[
+    team = RoundRobinGroupChat(
+        participants=[
             user_proxy,
-            agents["topic_refinement_agent"],
-            agents["paper_discovery_agent"],
-            agents["insight_agent"],
-            agents["report_agent"],
-            agents["gap_agent"]
+            agents_dict["topic_refinement_agent"],
+            agents_dict["paper_discovery_agent"],
+            agents_dict["insight_agent"],
+            agents_dict["report_agent"],
+            agents_dict["gap_agent"]
         ],
-        messages=[],
-        max_round=50,
-        speaker_selection_method="auto" 
-    )
-    
-    manager = autogen.GroupChatManager(
-        groupchat=groupchat, 
-        llm_config={"config_list": config_list}
+        termination_condition=termination
     )
 
-    # Start the workflow
-    print("Initiating Research Assistant...")
-    user_proxy.initiate_chat(
-        manager,
-        message="""I want to research "Multi-Agent Systems for Autonomous Driving". 
+    # Run the workflow
+    print("Initiating Research Assistant (AutoGen 0.4)...")
+    initial_message = """I want to research "Multi-Agent Systems for Autonomous Driving". 
 Please refine this topic, find relevant papers, synthesize insights, compile a report, and identify research gaps.
 """
-    )
+    
+    # Run
+    await team.run(task=initial_message)
+
+def main():
+    asyncio.run(run_workflow())
 
 if __name__ == "__main__":
     main()
