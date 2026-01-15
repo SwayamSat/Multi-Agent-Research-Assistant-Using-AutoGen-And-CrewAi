@@ -1,10 +1,10 @@
 import asyncio
 import os
 from dotenv import load_dotenv
-from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.teams import RoundRobinGroupChat
 from autogen_agentchat.conditions import TextMentionTermination
 from autogen_core.tools import FunctionTool
+from tools.custom_gemini_client import CustomGeminiClient
 # Import agents
 from agents.research_agents import create_research_agents
 from agents.user_proxy import create_user_proxy
@@ -20,16 +20,10 @@ async def run_workflow():
         print("Error: GEMINI_API_KEY not found in environment variables.")
         return
 
-    # Initialize Model Client
-    # Using OpenAI client but pointing it to Gemini (if needed, or just let it default for now if standard OpenAI key used)
-    # Since config says "GEMINI_API_KEY", we need to configure it for Gemini.
-    # AutoGen 0.4 OpenAI client supports base_url. 
-    # For Gemini via OpenAI format: base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
-    
-    model_client = OpenAIChatCompletionClient(
-        model="gemini-1.5-flash",
+    # Initialize Model Client using CustomGeminiClient
+    model_client = CustomGeminiClient(
         api_key=api_key,
-        base_url="https://generativelanguage.googleapis.com/v1beta/openai/" # Typical endpoint for Gemini-OpenAI compat
+        model="gemini-1.5-flash"
     )
 
     # Prepare Tools
