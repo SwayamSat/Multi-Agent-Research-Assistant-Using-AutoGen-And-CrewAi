@@ -30,7 +30,7 @@ def main():
     user_proxy = create_user_proxy(config_list)
 
     # Register Tools
-    # Register 'search_arxiv' for Paper_Discovery_Agent to CALL, and User_Proxy to EXECUTE
+    # Register 'search_arxiv' for Paper_Discovery_Agent to CALL, and User_Proxy to EXECUTE.
     autogen.register_function(
         search_arxiv,
         caller=agents["paper_discovery_agent"],
