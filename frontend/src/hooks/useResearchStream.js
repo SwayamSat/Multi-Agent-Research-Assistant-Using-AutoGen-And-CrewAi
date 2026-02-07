@@ -80,5 +80,14 @@ export function useResearchStream() {
         }
     };
 
-    return { messages, status, activeAgent, isLoading, startResearch };
+    const stopResearch = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+            setIsLoading(false);
+            setMessages(prev => [...prev, { type: 'error', content: 'Research stopped by user.', timestamp: Date.now() }]);
+        }
+    };
+
+    return { messages, status, activeAgent, isLoading, startResearch, stopResearch };
 }
