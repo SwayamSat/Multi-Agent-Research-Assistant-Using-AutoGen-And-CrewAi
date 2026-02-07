@@ -4,6 +4,8 @@ import { Send, Square, Terminal, Search, FileText, AlertCircle, Brain, User } fr
 import ReactMarkdown from 'react-markdown';
 import { useEffect, useRef, useState } from 'react';
 import { TypingEffect } from './TypingEffect';
+import { ThinkingBubble } from './ThinkingBubble';
+import remarkGfm from 'remark-gfm';
 
 // Map agent names to icons
 const AGENT_ICONS = {
@@ -62,19 +64,19 @@ export function ChatInterface({ messages, isLoading, onSend, onStop }) {
 
                                 {/* Message Bubble */}
                                 <div className={`rounded-2xl p-4 shadow-sm ${isUser
-                                        ? 'bg-blue-600 text-white rounded-tr-none'
-                                        : 'bg-white border border-gray-200 rounded-tl-none'
+                                    ? 'bg-blue-600 text-white rounded-tr-none'
+                                    : 'bg-white border border-gray-200 rounded-tl-none prose prose-slate max-w-none' // Modified classes
                                     }`}>
                                     {!isUser && msg.agent && (
-                                        <div className="text-xs font-bold uppercase tracking-wider mb-1 text-gray-400">
+                                        <div className="text-xs font-bold uppercase tracking-wider mb-1 text-gray-400 select-none"> {/* Added select-none */}
                                             {msg.agent.replace('_', ' ')}
                                         </div>
                                     )}
-                                    <div className={`prose prose-sm ${isUser ? 'prose-invert' : ''} max-w-none`}>
+                                    <div className={`text-sm leading-relaxed ${isUser ? '' : 'markdown-body'}`}>
                                         {((isAgent || msg.agent === 'Supervisor') && isLastMessage && isLoading) ? (
                                             <TypingEffect text={msg.content} speed={5} />
                                         ) : (
-                                            <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                                         )}
                                     </div>
                                 </div>
@@ -82,6 +84,18 @@ export function ChatInterface({ messages, isLoading, onSend, onStop }) {
                         </div>
                     );
                 })}
+
+                {isLoading && ( // Added thinking bubble when loading
+                    <div className="flex w-full justify-start animate-fade-in">
+                        <div className="flex max-w-[80%] flex-row items-start gap-3">
+                            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-white border border-gray-200 text-gray-600">
+                                <Brain size={18} className="animate-pulse" />
+                            </div>
+                            <ThinkingBubble />
+                        </div>
+                    </div>
+                )}
+
                 <div ref={endRef} />
             </div>
 
