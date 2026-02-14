@@ -29,22 +29,35 @@ export default function Home() {
   ].sort((a, b) => a.timestamp - b.timestamp);
 
   return (
-    <div className="flex h-screen w-full flex-col bg-gray-50 dark:bg-gray-950 font-sans text-slate-900 dark:text-gray-100 overflow-hidden">
-      <header className="h-16 flex-none border-b border-gray-200 dark:border-gray-800 flex items-center px-4 sm:px-6 bg-white dark:bg-gray-900 justify-between z-10">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg">
-            RA
+    <div className="flex h-screen w-full flex-col bg-white dark:bg-black font-sans text-stone-900 dark:text-stone-100 overflow-hidden">
+      <header className="h-16 flex-none border-b border-stone-100 dark:border-stone-900 flex items-center px-6 sm:px-8 bg-white/80 dark:bg-black/80 backdrop-blur-md sticky top-0 z-20 transition-colors">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 flex items-center justify-center text-stone-900 dark:text-white transition-colors">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-6 h-6"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
+            </svg>
           </div>
-          <h1 className="font-bold text-lg sm:text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hidden sm:block">
-            ResearchAgent Pro
+          <h1 className="font-medium text-lg tracking-tight text-stone-900 dark:text-white hidden sm:block">
+            ResearchAgent
           </h1>
-          <h1 className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent sm:hidden">
-            RA Pro
+          <h1 className="font-medium text-lg tracking-tight text-stone-900 dark:text-white sm:hidden">
+            RA
           </h1>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
-            Powered by CrewAI & LangGraph
+        <div className="flex items-center gap-6 ml-auto">
+          <div className="text-xs font-medium text-stone-500 dark:text-stone-400 hidden sm:block tracking-wide uppercase">
+            v1.0
           </div>
           <ThemeToggle />
         </div>
